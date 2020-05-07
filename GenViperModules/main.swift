@@ -8,5 +8,15 @@
 
 import Foundation
 
-print("Init!")
+guard CommandLine.arguments.count > 1 else {
+    ConsoleOut.printUsage()
+    exit(-1)
+}
 
+let argumentDictionary = ArgumentHandler.retrieveArgumentDictionary(from: CommandLine.arguments)
+
+guard let arguments = argumentDictionary else {
+    exit(-1)
+}
+
+Generator.generateModules(userName: arguments["userName"]!, projectName: arguments["projectName"]!, copyRights: arguments["copyRights"], moduleName: arguments["moduleName"]!, localDataManager: arguments["localDataManager"], remoteDataManager: arguments["remoteDataManager"])
