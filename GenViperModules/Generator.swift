@@ -148,7 +148,7 @@ class Generator {
         
         
         
-        let defaultBuilder = """
+        var defaultBuilder = """
         \(fileComment(for: moduleName, type: "Builder"))
         
         import Foundation
@@ -161,27 +161,54 @@ class Generator {
         \t\tlet presenter: \(moduleName)PresenterProtocol = \(moduleName)Presenter()
         \t\tlet router: \(moduleName)RouterProtocol = \(moduleName)Router()
         \t\tlet interactor: \(moduleName)InteractorProtocol = \(moduleName)Interactor()
-        \t\tlet localDataManager: \(moduleName)LocalDataManagerProtocol = \(moduleName)LocalDataManager()
-        \t\tlet remoteDataManager: \(moduleName)RemoteDataManagerProtocol = \(moduleName)RemoteDataManager()
-        \t\t
-        \t\trefTo\(moduleName)View?.presenter = presenter
-        \t\tpresenter.view = refTo\(moduleName)View
-        \t\tpresenter.view?.presenter = presenter
-        \t\tpresenter.router = router
-        \t\tpresenter.router?.presenter = presenter
-        \t\tpresenter.interactor = interactor
-        \t\tpresenter.interactor?.localDataManager = localDataManager
-        \t\tpresenter.interactor?.remoteDataManager = remoteDataManager
-        \t\tpresenter.interactor?.presenter = presenter
-        \t\t
-        \t\treturn refTo\(moduleName)View!
-        \t}
-        \t
-        \tstatic var storyboard: UIStoryboard {
-        \t\treturn UIStoryboard(name:"Main",bundle: Bundle.main)
-        \t}
-        }
         """
+        if (localDataManagerIsNeeded) {
+            defaultBuilder.append("""
+                \t\t
+                \t\tlet localDataManager: \(moduleName)LocalDataManagerProtocol = \(moduleName)LocalDataManager()
+                \t
+                """)
+        }
+        if (remoteDataManagerIsNeeded) {
+            defaultBuilder.append("""
+                \t\t
+                \t\tlet remoteDataManager: \(moduleName)RemoteDataManagerProtocol = \(moduleName)RemoteDataManager()
+                \t
+                """)
+        }
+        defaultBuilder.append("""
+            \t\t
+            \t\trefTo\(moduleName)View?.presenter = presenter
+            \t\tpresenter.view = refTo\(moduleName)View
+            \t\tpresenter.view?.presenter = presenter
+            \t\tpresenter.router = router
+            \t\tpresenter.router?.presenter = presenter
+            \t\tpresenter.interactor = interactor
+            """)
+        if (localDataManagerIsNeeded) {
+            defaultBuilder.append("""
+                \t\t
+                \t\tpresenter.interactor?.localDataManager = localDataManager
+                """)
+        }
+        if (remoteDataManagerIsNeeded) {
+            defaultBuilder.append("""
+                \t\t
+                \t\tpresenter.interactor?.remoteDataManager = remoteDataManager
+                """)
+        }
+        defaultBuilder.append("""
+            \t\t
+            \t\tpresenter.interactor?.presenter = presenter
+            \t\t
+            \t\treturn refTo\(moduleName)View!
+            \t}
+            \t
+            \tstatic var storyboard: UIStoryboard {
+            \t\treturn UIStoryboard(name:"Main",bundle: Bundle.main)
+            \t}
+            }
+            """)
         
         let defaultLocalDataManagerUrl = """
         \(fileComment(for: moduleName, type: "LocalDataManager"))
@@ -203,18 +230,30 @@ class Generator {
         }
         """
         
-        let defaultInteractor = """
+        var defaultInteractor = """
         \(fileComment(for: moduleName, type: "Interactor"))
         
         import Foundation
         
         class \(moduleName)Interactor: \(moduleName)InteractorProtocol {
         \tweak var presenter: \(moduleName)PresenterProtocol?
-        \tvar localDataManager: \(moduleName)LocalDataManagerProtocol?
-        \tvar remoteDataManager: \(moduleName)RemoteDataManagerProtocol?
+        """
+        if (localDataManagerIsNeeded) {
+            defaultInteractor.append("""
+                \t
+                \tvar localDataManager: \(moduleName)LocalDataManagerProtocol?
+                """)
+        }
+        if (remoteDataManagerIsNeeded) {
+            defaultInteractor.append("""
+                \t
+                \tvar remoteDataManager: \(moduleName)RemoteDataManagerProtocol?
+                """)
+        }
+        defaultInteractor.append("""
         \t
         }
-        """
+        """)
         
         let defaultPresenter = """
         \(fileComment(for: moduleName, type: "Presenter"))
