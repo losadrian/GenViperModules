@@ -10,16 +10,33 @@ import Foundation
 
 class Generator {
     private init(){}
-    class func generateModules(userName: String, projectName: String, copyRights: String?, moduleName: String, localDataManager: String?, remoteDataManager: String?) {
+    class func generateModules(userName: String, projectName: String, copyRights: String?, moduleName: String, localDataManager: String?, remoteDataManager: String?, cocoaFramework: String?) {
         var localDataManagerIsNeeded = false
         var remoteDataManagerIsNeeded = false
+        var isCocoaApi = false
         if let _ = localDataManager {
             localDataManagerIsNeeded = true
         }
         if let _ = remoteDataManager {
             remoteDataManagerIsNeeded = true
         }
+        if let _ = cocoaFramework {
+            isCocoaApi = true
+        }
         let oneOfDataManagerIsNeeded = localDataManagerIsNeeded || remoteDataManagerIsNeeded
+        
+        var uiFramework = "UIKit"
+        var storyboardType = "UIStoryboard"
+        var viewControllerType = "UIViewController"
+        var instantiateUIControllerMethodName = "instantiateViewController"
+        
+        if (isCocoaApi) {
+            uiFramework = "Cocoa"
+            storyboardType = "NSStoryboard"
+            viewControllerType = "NSViewController"
+            viewControllerType = "NSViewController"
+            instantiateUIControllerMethodName = "instantiateController"
+        }
         
         ConsoleOut.writeMessage("localDataManagerIsNeeded : \(localDataManagerIsNeeded)", to: .standard)
         ConsoleOut.writeMessage("remoteDataManagerIsNeeded : \(remoteDataManagerIsNeeded)", to: .standard)
@@ -152,11 +169,11 @@ class Generator {
         \(fileComment(for: moduleName, type: "Builder"))
         
         import Foundation
-        import UIKit
+        import \(uiFramework)
         
         class \(moduleName)Builder {
-        \tclass func create\(moduleName)Module() -> UIViewController {
-        \t\tlet refTo\(moduleName)View = storyboard.instantiateViewController(withIdentifier: "\(moduleName)ViewController") as? \(moduleName)ViewController
+        \tclass func create\(moduleName)Module() -> \(viewControllerType) {
+        \t\tlet refTo\(moduleName)View = storyboard.\(instantiateUIControllerMethodName)(withIdentifier: "\(moduleName)ViewController") as? \(moduleName)ViewController
         \t\t
         \t\tlet presenter: \(moduleName)PresenterProtocol = \(moduleName)Presenter()
         \t\tlet router: \(moduleName)RouterProtocol = \(moduleName)Router()
@@ -204,8 +221,8 @@ class Generator {
             \t\treturn refTo\(moduleName)View!
             \t}
             \t
-            \tstatic var storyboard: UIStoryboard {
-            \t\treturn UIStoryboard(name:"Main",bundle: Bundle.main)
+            \tstatic var storyboard: \(storyboardType) {
+            \t\treturn \(storyboardType)(name:"Main",bundle: Bundle.main)
             \t}
             }
             """)
@@ -272,7 +289,7 @@ class Generator {
         \(fileComment(for: moduleName, type: "Router"))
         
         import Foundation
-        import UIKit
+        import \(uiFramework)
         
         class \(moduleName)Router: \(moduleName)RouterProtocol {
         \tweak var presenter: \(moduleName)PresenterProtocol?
@@ -284,9 +301,9 @@ class Generator {
         \(fileComment(for: moduleName, type: "ViewController"))
         
         import Foundation
-        import UIKit
+        import \(uiFramework)
         
-        class \(moduleName)ViewController: UIViewController, \(moduleName)ViewControllerProtocol {
+        class \(moduleName)ViewController: \(viewControllerType), \(moduleName)ViewControllerProtocol {
         \tvar presenter: \(moduleName)PresenterProtocol?
         \t
         }

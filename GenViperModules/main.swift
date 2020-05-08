@@ -19,4 +19,4 @@ guard let arguments = argumentDictionary else {
     exit(-1)
 }
 
-Generator.generateModules(userName: arguments["userName"]!, projectName: arguments["projectName"]!, copyRights: arguments["copyRights"], moduleName: arguments["moduleName"]!, localDataManager: arguments["localDataManager"], remoteDataManager: arguments["remoteDataManager"])
+Generator.generateModules(userName: arguments["userName"]!, projectName: arguments["projectName"]!, copyRights: arguments["copyRights"], moduleName: arguments["moduleName"]!, localDataManager: arguments["localDataManager"], remoteDataManager: arguments["remoteDataManager"], cocoaFramework: arguments["cocoaFramework"])

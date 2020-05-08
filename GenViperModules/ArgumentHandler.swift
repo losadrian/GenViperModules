@@ -15,6 +15,7 @@ enum OptionType: String {
     case moduleName = "-m"
     case localDataManager = "-ldm"
     case remoteDataManager = "-rdm"
+    case cocoaFramework = "-cocoa"
     case unknown
     
     init(value: String) {
@@ -25,6 +26,7 @@ enum OptionType: String {
         case "-m": self = .moduleName
         case "-ldm": self = .localDataManager
         case "-rdm": self = .remoteDataManager
+        case "-cocoa": self = .cocoaFramework
         default: self = .unknown
         }
     }
@@ -68,15 +70,14 @@ class ArgumentHandler {
                     retVal["localDataManager"] = valueTypeArgument
                 case .remoteDataManager:
                     retVal["remoteDataManager"] = valueTypeArgument
+                case .cocoaFramework:
+                    retVal["cocoaFramework"] = valueTypeArgument
                 case .unknown:
                     ConsoleOut.writeMessage("The \"\(optionTypeArgument)\" argument is an unknown option", to: .error)
                     ConsoleOut.printUsage()
                     return nil
                 }
             }
-            
-            
-            
         }
         return retVal
     }
