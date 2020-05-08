@@ -10,20 +10,25 @@ import Foundation
 
 class Generator {
     private init(){}
-    class func generateModules(userName: String, projectName: String, copyRights: String?, moduleName: String, localDataManager: String?, remoteDataManager: String?, cocoaFramework: String?) {
-        var localDataManagerIsNeeded = false
-        var remoteDataManagerIsNeeded = false
+    class func generateModules(userName: String, projectName: String, copyRights: String?, moduleName: String, localDataManager: String?, remoteDataManager: String?, cocoaFramework: String?) -> Bool {
+        
+        var isSuccessGeneration = false
+        
+        var isLocalDataManagerNeeded = false
+        var isRemoteDataManagerNeeded = false
         var isCocoaApi = false
+        
         if let _ = localDataManager {
-            localDataManagerIsNeeded = true
+            isLocalDataManagerNeeded = true
         }
         if let _ = remoteDataManager {
-            remoteDataManagerIsNeeded = true
+            isRemoteDataManagerNeeded = true
         }
         if let _ = cocoaFramework {
             isCocoaApi = true
         }
-        let oneOfDataManagerIsNeeded = localDataManagerIsNeeded || remoteDataManagerIsNeeded
+        
+        let isOneOfDataManagerNeeded = isLocalDataManagerNeeded || isRemoteDataManagerNeeded
         
         var uiFramework = "UIKit"
         var storyboardType = "UIStoryboard"
@@ -38,8 +43,9 @@ class Generator {
             instantiateUIControllerMethodName = "instantiateController"
         }
         
-        ConsoleOut.writeMessage("localDataManagerIsNeeded : \(localDataManagerIsNeeded)", to: .standard)
-        ConsoleOut.writeMessage("remoteDataManagerIsNeeded : \(remoteDataManagerIsNeeded)", to: .standard)
+        ConsoleOut.writeMessage("isLocalDataManagerNeeded : \(isLocalDataManagerNeeded)", to: .standard)
+        ConsoleOut.writeMessage("isRemoteDataManagerNeeded : \(isRemoteDataManagerNeeded)", to: .standard)
+        
         let fileManager = FileManager.default
         
         let workUrl                 = URL(fileURLWithPath: fileManager.currentDirectoryPath, isDirectory: true)
@@ -86,6 +92,7 @@ class Generator {
             """
         }
         
+        // MARK: interfaceInteractor
         var interfaceInteractor = """
         \(fileComment(for: moduleName, type: "InteractorProtocol"))
         
@@ -95,13 +102,13 @@ class Generator {
         \tvar presenter: \(moduleName)PresenterProtocol? { get set }
         
         """
-        if (localDataManagerIsNeeded) {
+        if (isLocalDataManagerNeeded) {
             interfaceInteractor.append("""
                 \tvar localDataManager: \(moduleName)LocalDataManagerProtocol? { get set }
                 \t
                 """)
         }
-        if (remoteDataManagerIsNeeded) {
+        if (isRemoteDataManagerNeeded) {
             interfaceInteractor.append("""
                 \tvar remoteDataManager: \(moduleName)RemoteDataManagerProtocol? { get set }
                 \t
@@ -112,6 +119,7 @@ class Generator {
         """)
         
         
+        // MARK: interfaceLocalDataManager
         let interfaceLocalDataManager = """
         \(fileComment(for: moduleName, type: "LocalDataManagerProtocol"))
         
@@ -121,6 +129,17 @@ class Generator {
         }
         """
         
+        // MARK: interfaceRemoteDataManager
+        let interfaceRemoteDataManager = """
+        \(fileComment(for: moduleName, type: "RemoteDataManagerProtocol"))
+        
+        import Foundation
+        
+        protocol \(moduleName)RemoteDataManagerProtocol: class {
+        }
+        """
+        
+        // MARK: interfacePresenter
         let interfacePresenter = """
         \(fileComment(for: moduleName, type: "PresenterProtocol"))
         
@@ -133,16 +152,7 @@ class Generator {
         }
         """
         
-        
-        let interfaceRemoteDataManager = """
-        \(fileComment(for: moduleName, type: "RemoteDataManagerProtocol"))
-        
-        import Foundation
-        
-        protocol \(moduleName)RemoteDataManagerProtocol: class {
-        }
-        """
-        
+        // MARK: interfaceRouter
         let interfaceRouter = """
         \(fileComment(for: moduleName, type: "RouterProtocol"))
         
@@ -153,6 +163,7 @@ class Generator {
         }
         """
         
+        // MARK: interfaceViewController
         let interfaceViewController = """
         \(fileComment(for: moduleName, type: "ViewControllerProtocol"))
         
@@ -163,8 +174,7 @@ class Generator {
         }
         """
         
-        
-        
+        // MARK: defaultBuilder
         var defaultBuilder = """
         \(fileComment(for: moduleName, type: "Builder"))
         
@@ -179,14 +189,14 @@ class Generator {
         \t\tlet router: \(moduleName)RouterProtocol = \(moduleName)Router()
         \t\tlet interactor: \(moduleName)InteractorProtocol = \(moduleName)Interactor()
         """
-        if (localDataManagerIsNeeded) {
+        if (isLocalDataManagerNeeded) {
             defaultBuilder.append("""
                 \t\t
                 \t\tlet localDataManager: \(moduleName)LocalDataManagerProtocol = \(moduleName)LocalDataManager()
                 \t
                 """)
         }
-        if (remoteDataManagerIsNeeded) {
+        if (isRemoteDataManagerNeeded) {
             defaultBuilder.append("""
                 \t\t
                 \t\tlet remoteDataManager: \(moduleName)RemoteDataManagerProtocol = \(moduleName)RemoteDataManager()
@@ -202,13 +212,13 @@ class Generator {
             \t\tpresenter.router?.presenter = presenter
             \t\tpresenter.interactor = interactor
             """)
-        if (localDataManagerIsNeeded) {
+        if (isLocalDataManagerNeeded) {
             defaultBuilder.append("""
                 \t\t
                 \t\tpresenter.interactor?.localDataManager = localDataManager
                 """)
         }
-        if (remoteDataManagerIsNeeded) {
+        if (isRemoteDataManagerNeeded) {
             defaultBuilder.append("""
                 \t\t
                 \t\tpresenter.interactor?.remoteDataManager = remoteDataManager
@@ -226,8 +236,35 @@ class Generator {
             \t}
             }
             """)
+            
+            // MARK: defaultInteractor
+            var defaultInteractor = """
+            \(fileComment(for: moduleName, type: "Interactor"))
+            
+            import Foundation
+            
+            class \(moduleName)Interactor: \(moduleName)InteractorProtocol {
+            \tweak var presenter: \(moduleName)PresenterProtocol?
+            """
+            if (isLocalDataManagerNeeded) {
+                defaultInteractor.append("""
+                    \t
+                    \tvar localDataManager: \(moduleName)LocalDataManagerProtocol?
+                    """)
+            }
+            if (isRemoteDataManagerNeeded) {
+                defaultInteractor.append("""
+                    \t
+                    \tvar remoteDataManager: \(moduleName)RemoteDataManagerProtocol?
+                    """)
+            }
+            defaultInteractor.append("""
+            \t
+            }
+            """)
         
-        let defaultLocalDataManagerUrl = """
+        // MARK: defaultLocalDataManager
+        let defaultLocalDataManager = """
         \(fileComment(for: moduleName, type: "LocalDataManager"))
         
         import Foundation
@@ -237,7 +274,8 @@ class Generator {
         }
         """
         
-        let defaultRemoteDataManagerUrl = """
+        // MARK: defaultRemoteDataManager
+        let defaultRemoteDataManager = """
         \(fileComment(for: moduleName, type: "RemoteDataManager"))
         
         import Foundation
@@ -247,31 +285,7 @@ class Generator {
         }
         """
         
-        var defaultInteractor = """
-        \(fileComment(for: moduleName, type: "Interactor"))
-        
-        import Foundation
-        
-        class \(moduleName)Interactor: \(moduleName)InteractorProtocol {
-        \tweak var presenter: \(moduleName)PresenterProtocol?
-        """
-        if (localDataManagerIsNeeded) {
-            defaultInteractor.append("""
-                \t
-                \tvar localDataManager: \(moduleName)LocalDataManagerProtocol?
-                """)
-        }
-        if (remoteDataManagerIsNeeded) {
-            defaultInteractor.append("""
-                \t
-                \tvar remoteDataManager: \(moduleName)RemoteDataManagerProtocol?
-                """)
-        }
-        defaultInteractor.append("""
-        \t
-        }
-        """)
-        
+        // MARK: defaultPresenter
         let defaultPresenter = """
         \(fileComment(for: moduleName, type: "Presenter"))
         
@@ -285,6 +299,7 @@ class Generator {
         }
         """
         
+        // MARK: defaultRouter
         let defaultRouter = """
         \(fileComment(for: moduleName, type: "Router"))
         
@@ -297,6 +312,7 @@ class Generator {
         }
         """
         
+        // MARK: defaultViewController
         let defaultViewController = """
         \(fileComment(for: moduleName, type: "ViewController"))
         
@@ -309,11 +325,12 @@ class Generator {
         }
         """
         
+        // MARK: file write
         do {
             var directoryPathUrlArray = [URL]()
             directoryPathUrlArray.append(moduleUrl)
             directoryPathUrlArray.append(builderImpUrl)
-            if (oneOfDataManagerIsNeeded) {
+            if (isOneOfDataManagerNeeded) {
                 directoryPathUrlArray.append(dataManagerImpUrl)
             }
             directoryPathUrlArray.append(interactorImpUrl)
@@ -326,22 +343,22 @@ class Generator {
                 try fileManager.createDirectory(at: $0, withIntermediateDirectories: true, attributes: nil)
             }
             try interfaceInteractor.write(to: protocolInteractorUrl, atomically: true, encoding: .utf8)
-            if (localDataManagerIsNeeded) {
+            if (isLocalDataManagerNeeded) {
                 try interfaceLocalDataManager.write(to: protocolLocalDataManagerUrl, atomically: true, encoding: .utf8)
             }
             try interfacePresenter.write(to: protocolPresenterUrl, atomically: true, encoding: .utf8)
-            if (remoteDataManagerIsNeeded) {
+            if (isRemoteDataManagerNeeded) {
                 try interfaceRemoteDataManager.write(to: protocolRemoteDataManagerUrl, atomically: true, encoding: .utf8)
             }
             try interfaceRouter.write(to: protocolRouterUrl, atomically: true, encoding: .utf8)
             try interfaceViewController.write(to: protocolViewControllerUrl, atomically: true, encoding: .utf8)
             
             try defaultBuilder.write(to: builderUrl, atomically: true, encoding: .utf8)
-            if (localDataManagerIsNeeded) {
-                try defaultLocalDataManagerUrl.write(to: localDataManagerUrl, atomically: true, encoding: .utf8)
+            if (isLocalDataManagerNeeded) {
+                try defaultLocalDataManager.write(to: localDataManagerUrl, atomically: true, encoding: .utf8)
             }
-            if (remoteDataManagerIsNeeded) {
-                try defaultRemoteDataManagerUrl.write(to: remoteDataManagerUrl, atomically: true, encoding: .utf8)
+            if (isRemoteDataManagerNeeded) {
+                try defaultRemoteDataManager.write(to: remoteDataManagerUrl, atomically: true, encoding: .utf8)
             }
             try defaultBuilder.write(to: builderUrl, atomically: true, encoding: .utf8)
             try defaultInteractor.write(to: interactorUrl, atomically: true, encoding: .utf8)
@@ -350,9 +367,12 @@ class Generator {
             try defaultViewController.write(to: viewControllerUrl, atomically: true, encoding: .utf8)
             
             ConsoleOut.writeMessage("Files generated to: \(workUrl)", to: .standard)
+            isSuccessGeneration = true
         }
         catch {
             ConsoleOut.writeMessage(error.localizedDescription, to: .error)
         }
+        
+        return isSuccessGeneration
     }
 }

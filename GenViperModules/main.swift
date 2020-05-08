@@ -19,4 +19,11 @@ guard let arguments = argumentDictionary else {
     exit(-1)
 }
 
-Generator.generateModules(userName: arguments["userName"]!, projectName: arguments["projectName"]!, copyRights: arguments["copyRights"], moduleName: arguments["moduleName"]!, localDataManager: arguments["localDataManager"], remoteDataManager: arguments["remoteDataManager"], cocoaFramework: arguments["cocoaFramework"])
+let isSuccessGeneration = Generator.generateModules(userName: arguments["userName"]!, projectName: arguments["projectName"]!, copyRights: arguments["copyRights"], moduleName: arguments["moduleName"]!, localDataManager: arguments["localDataManager"], remoteDataManager: arguments["remoteDataManager"], cocoaFramework: arguments["cocoaFramework"])
+
+if isSuccessGeneration {
+    exit(0)
+}
+else {
+    exit(-1)
+}
